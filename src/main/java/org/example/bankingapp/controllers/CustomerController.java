@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@CrossOrigin("*")
 @AllArgsConstructor
 public class CustomerController {
     private final BankAccountService bankAccountService;
@@ -39,4 +40,8 @@ public class CustomerController {
         bankAccountService.deleteCustomer(id);
     }
 
+    @GetMapping("/customers/search")
+    public List<CustomerDTO> searchCustomer(@RequestParam(name="keyword", defaultValue = "") String name) {
+        return bankAccountService.searchCustomers("%"+name+"%");
+    }
 }

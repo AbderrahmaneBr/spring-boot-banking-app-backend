@@ -2,6 +2,7 @@ package org.example.bankingapp.services.impl;
 
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.bankingapp.domain.entities.*;
 import org.example.bankingapp.domain.enums.OperationType;
 import org.example.bankingapp.domain.repositories.AccountOperationRepository;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@Slf4j
 @AllArgsConstructor
 public class BankAccountServiceImpl implements BankAccountService {
     private final CustomerRepository customerRepository;
@@ -165,13 +167,33 @@ public class BankAccountServiceImpl implements BankAccountService {
 
         BankAccount bankAccount = bankAccountRepository.findById(accountId).orElseThrow(BankAccountNotFoundException::new);
         Page<AccountOperation> accountOperations = accountOperationRepository.findByBankAccount_Id(accountId, PageRequest.of(page, size));
+        List<AccountOperationDTO> accountOperationDTOS = accountOperations.getContent().stream().map(dtoMapper::fromAccountOperation).collect(Collectors.toList());
+
         AccountHistoryDTO accountHistoryDTO = new AccountHistoryDTO();
-        accountHistoryDTO.setAccountOperationsDTOS(accountOperations.getContent().stream().map(dtoMapper::fromAccountOperation).collect(Collectors.toList()));
+        accountHistoryDTO.setAccountOperations(accountOperationDTOS);
         accountHistoryDTO.setAccountId(accountId);
         accountHistoryDTO.setBalance(bankAccount.getBalance());
         accountHistoryDTO.setPageSize(size);
         accountHistoryDTO.setCurrentPage(page);
         accountHistoryDTO.setTotalPage(accountOperations.getTotalPages());
         return accountHistoryDTO;
+    }
+
+    @Override
+    public List<CustomerDTO> searchCustomers(String searchTerm) {
+        List<Customer> customers = customerRepository.searchByNameContains(searchTerm);
+        List<CustomerDTO> customerDTOS = customers.stream().map(dtoMapper::fromCustomer).collect(Collectors.toList());
+        return customerDTOS;
+    }
+
+    @Override
+    public AccountOperationDTO saveOperation(String accountId, AccountOperationDTO accountOperationDTO) {
+        AccountOperation accountOperation = new AccountOperation();
+        accountOperation.setAmount(accountOperationDTO.getAmount());
+        accountOperation.setDescription(accountOperationDTO.getDescription());
+        accountOperation.setBankAccount(bankAccountRepository.findById(accountId).get());
+        accountOperation.setType(OperationType.DEBIT);
+        accountOperation.setOperationDate(new Date());
+        return dtoMapper.fromAccountOperation(accountOperationRepository.save(accountOperation));
     }
 }
