@@ -10,6 +10,7 @@ import org.example.bankingapp.dto.BankAccountDTO;
 import org.example.bankingapp.dto.CurrentAccountDTO;
 import org.example.bankingapp.services.BankAccountService;
 import org.example.bankingapp.services.impl.BankAccountServiceImpl;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,11 +38,13 @@ public class BankAccountController {
         return bankAccountService.accountHistory(accountId);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/accounts/{accountId}/operations")
     public AccountOperationDTO addBankAccountOperation(@PathVariable String accountId, @RequestBody AccountOperationDTO accountOperationDTO) {
         return bankAccountService.saveOperation(accountId, accountOperationDTO);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/accounts/{accountId}/pageOperations")
     public AccountHistoryDTO getBankAccountHistoryPage(@PathVariable String accountId, @RequestParam(name="page", defaultValue = "0" +
             "+") int page, @RequestParam(name = "size", defaultValue = "3") int size) {
